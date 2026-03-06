@@ -1,10 +1,10 @@
-#  Campus Club API
+# Campus Club API
 
 Backend API for the Campus Club system built with:
 
-* Node.js
-* Express.js
-* MongoDB Atlas
+- Node.js
+- Express.js
+- MongoDB Atlas
 
 Architecture Pattern:
 
@@ -60,12 +60,14 @@ Add the following:
 
 ```
 PORT=3000
-MONGO_URI=your_mongodb_connection_string
+MONGO_URL=your_mongodb_connection_string
 ```
+
+`MONGO_URI` is also supported for backward compatibility.
 
 ⚠️ IMPORTANT:
 
-* Do NOT push `.env` to GitHub.
+- Do NOT push `.env` to GitHub.
 
 ---
 
@@ -87,6 +89,30 @@ Server runs on:
 
 ```
 http://localhost:3000
+```
+
+---
+
+# 🐳 Docker
+
+## Development (default)
+
+This is the default behavior. It starts:
+
+- API container in development mode
+- MongoDB container (`mongo`) inside Docker
+
+```
+docker compose up --build
+```
+
+## Production
+
+Production does not start a Mongo container.
+It reads `MONGO_URL` and all other environment variables from `.env`.
+
+```
+docker compose -f docker-compose.prod.yml up --build
 ```
 
 ---
@@ -136,9 +162,9 @@ git push origin feature/ahmed
 
 ### 4️⃣ Open Pull Request
 
-* Go to GitHub
-* Open a Pull Request
-* Request review
-* Merge after approval
+- Go to GitHub
+- Open a Pull Request
+- Request review
+- Merge after approval
 
 ---
