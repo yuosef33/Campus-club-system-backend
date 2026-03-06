@@ -1,0 +1,2 @@
+// announcements.model.js
+
