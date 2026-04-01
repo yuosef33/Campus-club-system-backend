@@ -1,0 +1,65 @@
+services:
+  auth-service:
+    build: .
+    command: node services/auth-service/src/server.js
+    env_file:
+      - .env
+    ports:
+      - "${AUTH_SERVICE_PORT:-4001}:4001"
+
+  event-service:
+    build: .
+    command: node services/event-service/src/server.js
+    env_file:
+      - .env
+    environment:
+      RSVP_SERVICE_URL: http://rsvp-service:4003
+    ports:
+      - "${EVENT_SERVICE_PORT:-4002}:4002"
+
+  rsvp-service:
+    build: .
+    command: node services/rsvp-service/src/server.js
+    env_file:
+      - .env
+    environment:
+      EVENT_SERVICE_URL: http://event-service:4002
+      AUTH_SERVICE_URL: http://auth-service:4001
+    ports:
+      - "${RSVP_SERVICE_PORT:-4003}:4003"
+
+  announcement-service:
+    build: .
+    command: node services/announcement-service/src/server.js
+    env_file:
+      - .env
+    ports:
+      - "${ANNOUNCEMENT_SERVICE_PORT:-4004}:4004"
+
+  gallery-service:
+    build: .
+    command: node services/gallery-service/src/server.js
+    env_file:
+      - .env
+    ports:
+      - "${GALLERY_SERVICE_PORT:-4005}:4005"
+
+  api-gateway:
+    build: .
+    command: node api-gateway/src/server.js
+    env_file:
+      - .env
+    environment:
+      AUTH_SERVICE_URL: http://auth-service:4001
+      EVENT_SERVICE_URL: http://event-service:4002
+      RSVP_SERVICE_URL: http://rsvp-service:4003
+      ANNOUNCEMENT_SERVICE_URL: http://announcement-service:4004
+      GALLERY_SERVICE_URL: http://gallery-service:4005
+    depends_on:
+      - auth-service
+      - event-service
+      - rsvp-service
+      - announcement-service
+      - gallery-service
+    ports:
+      - "${API_GATEWAY_PORT:-4000}:4000"

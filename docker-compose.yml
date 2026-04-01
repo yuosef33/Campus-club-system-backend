@@ -1,0 +1,198 @@
+services:
+  mongo:
+    image: mongo:7
+    container_name: campus-club-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: campus-club-rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+
+  mailhog:
+    image: mailhog/mailhog
+    container_name: campus-club-mailhog
+    ports:
+      - "1025:1025"
+      - "8025:8025"
+
+  auth-service:
+    build: .
+    command: npm run dev:auth
+    env_file:
+      - .env.development
+    environment:
+      NODE_ENV: development
+      AUTH_SERVICE_PORT: 4001
+      MONGO_URI: mongodb://mongo:27017/campus_club
+      AUTH_DB_NAME: campus_auth
+      AMQP_URL: amqp://rabbitmq:5672
+      SMTP_HOST: mailhog
+      SMTP_PORT: 1025
+      SMTP_SECURE: "false"
+      SMTP_USER: ""
+      SMTP_PASS: ""
+      SMTP_FROM: Campus Club <no-reply@campusclub.local>
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "1000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+      mailhog:
+        condition: service_started
+    ports:
+      - "4001:4001"
+    volumes:
+      - .:/usr/src/app
+      - auth_node_modules:/usr/src/app/node_modules
+
+  event-service:
+    build: .
+    command: npm run dev:event
+    env_file:
+      - .env.development
+    environment:
+      NODE_ENV: development
+      EVENT_SERVICE_PORT: 4002
+      MONGO_URI: mongodb://mongo:27017/campus_club
+      EVENT_DB_NAME: campus_event
+      RSVP_SERVICE_URL: http://rsvp-service:4003
+      AMQP_URL: amqp://rabbitmq:5672
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "1000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_started
+    ports:
+      - "4002:4002"
+    volumes:
+      - .:/usr/src/app
+      - event_node_modules:/usr/src/app/node_modules
+
+  rsvp-service:
+    build: .
+    command: npm run dev:rsvp
+    env_file:
+      - .env.development
+    environment:
+      NODE_ENV: development
+      RSVP_SERVICE_PORT: 4003
+      MONGO_URI: mongodb://mongo:27017/campus_club
+      RSVP_DB_NAME: campus_rsvp
+      EVENT_SERVICE_URL: http://event-service:4002
+      AUTH_SERVICE_URL: http://auth-service:4001
+      AMQP_URL: amqp://rabbitmq:5672
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "1000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      event-service:
+        condition: service_started
+    ports:
+      - "4003:4003"
+    volumes:
+      - .:/usr/src/app
+      - rsvp_node_modules:/usr/src/app/node_modules
+
+  announcement-service:
+    build: .
+    command: npm run dev:announcement
+    env_file:
+      - .env.development
+    environment:
+      NODE_ENV: development
+      ANNOUNCEMENT_SERVICE_PORT: 4004
+      MONGO_URI: mongodb://mongo:27017/campus_club
+      ANNOUNCEMENT_DB_NAME: campus_announcement
+      AMQP_URL: amqp://rabbitmq:5672
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "1000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "4004:4004"
+    volumes:
+      - .:/usr/src/app
+      - announcement_node_modules:/usr/src/app/node_modules
+
+  gallery-service:
+    build: .
+    command: npm run dev:gallery
+    env_file:
+      - .env.development
+    environment:
+      NODE_ENV: development
+      GALLERY_SERVICE_PORT: 4005
+      MONGO_URI: mongodb://mongo:27017/campus_club
+      GALLERY_DB_NAME: campus_gallery
+      AMQP_URL: amqp://rabbitmq:5672
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "1000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+    ports:
+      - "4005:4005"
+    volumes:
+      - .:/usr/src/app
+      - gallery_node_modules:/usr/src/app/node_modules
+
+  api-gateway:
+    build: .
+    command: npm run dev:gateway
+    env_file:
+      - .env.development
+    environment:
+      NODE_ENV: development
+      API_GATEWAY_PORT: 4000
+      AUTH_SERVICE_URL: http://auth-service:4001
+      EVENT_SERVICE_URL: http://event-service:4002
+      RSVP_SERVICE_URL: http://rsvp-service:4003
+      ANNOUNCEMENT_SERVICE_URL: http://announcement-service:4004
+      GALLERY_SERVICE_URL: http://gallery-service:4005
+      CHOKIDAR_USEPOLLING: "true"
+      CHOKIDAR_INTERVAL: "1000"
+    depends_on:
+      auth-service:
+        condition: service_started
+      event-service:
+        condition: service_started
+      rsvp-service:
+        condition: service_started
+      announcement-service:
+        condition: service_started
+      gallery-service:
+        condition: service_started
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/usr/src/app
+      - gateway_node_modules:/usr/src/app/node_modules
+
+volumes:
+  mongo_data:
+  auth_node_modules:
+  event_node_modules:
+  rsvp_node_modules:
+  announcement_node_modules:
+  gallery_node_modules:
+  gateway_node_modules:

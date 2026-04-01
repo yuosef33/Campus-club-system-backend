@@ -1,0 +1,43 @@
+{
+  "name": "campus-club-backend",
+  "version": "1.0.0",
+  "main": "api-gateway/src/server.js",
+  "scripts": {
+    "dev": "nodemon api-gateway/src/server.js",
+    "dev:auth": "nodemon -L --watch services/auth-service/src --watch shared --ext js,json services/auth-service/src/server.js",
+    "dev:event": "nodemon -L --watch services/event-service/src --watch shared --ext js,json services/event-service/src/server.js",
+    "dev:rsvp": "nodemon -L --watch services/rsvp-service/src --watch shared --ext js,json services/rsvp-service/src/server.js",
+    "dev:announcement": "nodemon -L --watch services/announcement-service/src --watch shared --ext js,json services/announcement-service/src/server.js",
+    "dev:gallery": "nodemon -L --watch services/gallery-service/src --watch shared --ext js,json services/gallery-service/src/server.js",
+    "dev:gateway": "nodemon -L --watch api-gateway/src --watch shared --ext js,json api-gateway/src/server.js",
+    "start": "node api-gateway/src/server.js",
+    "start:all": "node scripts/start-all.js",
+    "start:auth": "node services/auth-service/src/server.js",
+    "start:event": "node services/event-service/src/server.js",
+    "start:rsvp": "node services/rsvp-service/src/server.js",
+    "start:announcement": "node services/announcement-service/src/server.js",
+    "start:gallery": "node services/gallery-service/src/server.js",
+    "start:gateway": "node api-gateway/src/server.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "dependencies": {
+    "amqplib": "^0.10.9",
+    "axios": "^1.13.1",
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.8.0",
+    "cors": "^2.8.6",
+    "dotenv": "^17.3.1",
+    "express": "^5.2.1",
+    "http-proxy-middleware": "^3.0.5",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^9.2.3",
+    "multer": "^2.0.2",
+    "nodemailer": "^8.0.4"
+  },
+  "devDependencies": {
+    "nodemon": "^3.1.14"
+  }
+}
