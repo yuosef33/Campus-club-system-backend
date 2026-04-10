@@ -91,6 +91,13 @@ router.patch(
   validateUserIdParam,
   authController.rejectUser
 );
+router.patch(
+  "/admin/users/:id/promote",
+  authenticate,
+  authorizeRoles(ROLES.ADMIN),
+  validateUserIdParam,
+  authController.promoteUserToAdmin
+);
 router.post(
   "/admin/users/import-csv",
   authenticate,

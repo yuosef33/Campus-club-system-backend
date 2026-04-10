@@ -8,6 +8,7 @@ const eventRoutes = require("./routes/event.routes");
 const rsvpRoutes = require("./routes/rsvp.routes");
 const announcementRoutes = require("./routes/announcement.routes");
 const galleryRoutes = require("./routes/gallery.routes");
+const chatRoutes = require("./routes/chat.routes");
 
 const app = express();
 
@@ -28,6 +29,7 @@ app.use("/api/v1", rsvpRoutes);
 app.use("/api/v1", eventRoutes);
 app.use("/api/v1", announcementRoutes);
 app.use("/api/v1", galleryRoutes);
+app.use("/api/v1", chatRoutes);
 
 app.use(notFound);
 app.use(errorHandler);

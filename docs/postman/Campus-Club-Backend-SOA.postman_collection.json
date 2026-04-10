@@ -1,744 +1,1101 @@
-{
-  "info": {
-    "_postman_id": "a7fef1f8-55d4-4b99-b7a1-92ac8df076b4",
-    "name": "Campus Club Backend SOA API",
-    "description": "Postman collection for Campus Club Management System SOA backend via API Gateway.",
-    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
-  },
-  "item": [
-    {
-      "name": "Auth & Users",
-      "item": [
-        {
-          "name": "Register User",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Student One\",\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"User@1234\"\n}"
-            },
-            "url": "{{baseUrl}}/auth/register"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json?.data?._id) {",
-                  "  pm.collectionVariables.set('userId', json.data._id);",
-                  "}",
-                  "if (json?.meta?.verificationToken) {",
-                  "  pm.collectionVariables.set('verificationToken', json.meta.verificationToken);",
-                  "}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Login Admin",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
-            },
-            "url": "{{baseUrl}}/auth/login"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json?.data?.token) {",
-                  "  pm.collectionVariables.set('adminToken', json.data.token);",
-                  "}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Login User (After Admin Approval)",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"User@1234\"\n}"
-            },
-            "url": "{{baseUrl}}/auth/login"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json?.data?.token) {",
-                  "  pm.collectionVariables.set('userToken', json.data.token);",
-                  "}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Forgot Password",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userEmail}}\"\n}"
-            },
-            "url": "{{baseUrl}}/auth/forgot-password"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json?.meta?.resetToken) {",
-                  "  pm.collectionVariables.set('resetToken', json.meta.resetToken);",
-                  "}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Reset Password",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"User@6789\"\n}"
-            },
-            "url": "{{baseUrl}}/auth/reset-password"
-          }
-        },
-        {
-          "name": "Request Email Verification",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userEmail}}\"\n}"
-            },
-            "url": "{{baseUrl}}/auth/verify-email/request"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json?.meta?.verificationToken) {",
-                  "  pm.collectionVariables.set('verificationToken', json.meta.verificationToken);",
-                  "}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Confirm Email Verification",
-          "request": {
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"token\": \"{{verificationToken}}\"\n}"
-            },
-            "url": "{{baseUrl}}/auth/verify-email/confirm"
-          }
-        },
-        {
-          "name": "Confirm Email Verification (GET Link Style)",
-          "request": {
-            "method": "GET",
-            "url": "{{baseUrl}}/auth/verify-email/confirm?token={{verificationToken}}"
-          }
-        },
-        {
-          "name": "Get My Profile",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{userToken}}", "type": "string" }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/users/me"
-          }
-        },
-        {
-          "name": "Update My Profile",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{userToken}}", "type": "string" }
-              ]
-            },
-            "method": "PUT",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Student One Updated\"\n}"
-            },
-            "url": "{{baseUrl}}/users/me"
-          }
-        },
-        {
-          "name": "Update My Password",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{userToken}}", "type": "string" }
-              ]
-            },
-            "method": "PUT",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"currentPassword\": \"User@1234\",\n  \"newPassword\": \"User@12345\"\n}"
-            },
-            "url": "{{baseUrl}}/users/me/password"
-          }
-        },
-        {
-          "name": "Update My Profile Image (URL)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{userToken}}", "type": "string" }
-              ]
-            },
-            "method": "PUT",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"imageUrl\": \"https://images.unsplash.com/photo-1511367461989-f85a21fda167\"\n}"
-            },
-            "url": "{{baseUrl}}/users/me/profile-image"
-          }
-        },
-        {
-          "name": "Update My Profile Image (File Upload - Cloudinary)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{userToken}}", "type": "string" }
-              ]
-            },
-            "method": "PUT",
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                { "key": "image", "type": "file", "src": [] }
-              ]
-            },
-            "url": "{{baseUrl}}/users/me/profile-image"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Admin - Membership",
-      "item": [
-        {
-          "name": "List Members",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{adminToken}}", "type": "string" }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/admin/users"
-          }
-        },
-        {
-          "name": "Approve User",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{adminToken}}", "type": "string" }
-              ]
-            },
-            "method": "PATCH",
-            "url": "{{baseUrl}}/admin/users/{{userId}}/approve"
-          }
-        },
-        {
-          "name": "Reject User",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{adminToken}}", "type": "string" }
-              ]
-            },
-            "method": "PATCH",
-            "url": "{{baseUrl}}/admin/users/{{userId}}/reject"
-          }
-        },
-        {
-          "name": "Import Members CSV (Approved + Verified)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{adminToken}}", "type": "string" }
-              ]
-            },
-            "method": "POST",
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                { "key": "file", "type": "file", "src": [] }
-              ]
-            },
-            "url": "{{baseUrl}}/admin/users/import-csv",
-            "description": "CSV headers must include email and one of displayName/display_name/name/full_name."
-          }
-        }
-      ]
-    },
-    {
-      "name": "Events",
-      "item": [
-        {
-          "name": "Create Event",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{adminToken}}", "type": "string" }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Welcome Session\",\n  \"description\": \"Orientation event for new members\",\n  \"date\": \"2027-01-15T15:00:00.000Z\",\n  \"location\": \"Main Hall\",\n  \"capacity\": 50\n}"
-            },
-            "url": "{{baseUrl}}/events"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json?.data?._id) {",
-                  "  pm.collectionVariables.set('eventId', json.data._id);",
-                  "}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "List Events (All)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{userToken}}", "type": "string" }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/events?type=all"
-          }
-        },
-        {
-          "name": "Get Event By Id",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{userToken}}", "type": "string" }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/events/{{eventId}}"
-          }
-        },
-        {
-          "name": "Get Event By Id (Admin Includes Attendees)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{adminToken}}", "type": "string" }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/events/{{eventId}}"
-          }
-        },
-        {
-          "name": "Update Event",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{adminToken}}", "type": "string" }
-              ]
-            },
-            "method": "PUT",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"location\": \"Auditorium A\",\n  \"capacity\": 60\n}"
-            },
-            "url": "{{baseUrl}}/events/{{eventId}}"
-          }
-        },
-        {
-          "name": "Delete Event",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{adminToken}}", "type": "string" }
-              ]
-            },
-            "method": "DELETE",
-            "url": "{{baseUrl}}/events/{{eventId}}"
-          }
-        }
-      ]
-    },
-    {
-      "name": "RSVP",
-      "item": [
-        {
-          "name": "Create RSVP",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{userToken}}", "type": "string" }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"eventId\": \"{{eventId}}\"\n}"
-            },
-            "url": "{{baseUrl}}/rsvps"
-          }
-        },
-        {
-          "name": "List My RSVPs",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{userToken}}", "type": "string" }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/rsvps/me"
-          }
-        },
-        {
-          "name": "List Event Attendees (Admin)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{adminToken}}", "type": "string" }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/events/{{eventId}}/attendees"
-          }
-        },
-        {
-          "name": "Cancel RSVP",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{userToken}}", "type": "string" }
-              ]
-            },
-            "method": "DELETE",
-            "url": "{{baseUrl}}/rsvps/{{eventId}}"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Announcements",
-      "item": [
-        {
-          "name": "Create Announcement",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{adminToken}}", "type": "string" }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Weekly Update\",\n  \"content\": \"Club meeting moved to Thursday at 5 PM.\"\n}"
-            },
-            "url": "{{baseUrl}}/announcements"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json?.data?._id) {",
-                  "  pm.collectionVariables.set('announcementId', json.data._id);",
-                  "}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "List Announcements",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{userToken}}", "type": "string" }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/announcements"
-          }
-        },
-        {
-          "name": "Update Announcement",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{adminToken}}", "type": "string" }
-              ]
-            },
-            "method": "PUT",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"content\": \"Club meeting moved to Friday at 4 PM.\"\n}"
-            },
-            "url": "{{baseUrl}}/announcements/{{announcementId}}"
-          }
-        },
-        {
-          "name": "Delete Announcement",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{adminToken}}", "type": "string" }
-              ]
-            },
-            "method": "DELETE",
-            "url": "{{baseUrl}}/announcements/{{announcementId}}"
-          }
-        }
-      ]
-    },
-    {
-      "name": "Gallery",
-      "item": [
-        {
-          "name": "Add Gallery Photo (File Upload - Cloudinary)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{adminToken}}", "type": "string" }
-              ]
-            },
-            "method": "POST",
-            "body": {
-              "mode": "formdata",
-              "formdata": [
-                { "key": "title", "value": "Hackathon Day", "type": "text" },
-                { "key": "description", "value": "Photos from the annual coding hackathon event.", "type": "text" },
-                { "key": "date", "value": "2027-01-20T10:00:00.000Z", "type": "text" },
-                { "key": "image", "type": "file", "src": [] }
-              ]
-            },
-            "url": "{{baseUrl}}/gallery"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json?.data?._id) {",
-                  "  pm.collectionVariables.set('galleryId', json.data._id);",
-                  "}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "Add Gallery Photo (URL)",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{adminToken}}", "type": "string" }
-              ]
-            },
-            "method": "POST",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Hackathon Day\",\n  \"description\": \"Photos from the annual coding hackathon event.\",\n  \"date\": \"2027-01-20T10:00:00.000Z\",\n  \"imageUrl\": \"https://images.unsplash.com/photo-1519389950473-47ba0277781c\"\n}"
-            },
-            "url": "{{baseUrl}}/gallery"
-          },
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "type": "text/javascript",
-                "exec": [
-                  "const json = pm.response.json();",
-                  "if (json?.data?._id) {",
-                  "  pm.collectionVariables.set('galleryId', json.data._id);",
-                  "}"
-                ]
-              }
-            }
-          ]
-        },
-        {
-          "name": "List Gallery",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{userToken}}", "type": "string" }
-              ]
-            },
-            "method": "GET",
-            "url": "{{baseUrl}}/gallery"
-          }
-        },
-        {
-          "name": "Update Gallery Photo",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{adminToken}}", "type": "string" }
-              ]
-            },
-            "method": "PUT",
-            "header": [
-              { "key": "Content-Type", "value": "application/json" }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"title\": \"Hackathon Day (Updated)\",\n  \"description\": \"Updated description for the gallery item.\"\n}"
-            },
-            "url": "{{baseUrl}}/gallery/{{galleryId}}"
-          }
-        },
-        {
-          "name": "Delete Gallery Photo",
-          "request": {
-            "auth": {
-              "type": "bearer",
-              "bearer": [
-                { "key": "token", "value": "{{adminToken}}", "type": "string" }
-              ]
-            },
-            "method": "DELETE",
-            "url": "{{baseUrl}}/gallery/{{galleryId}}"
-          }
-        }
-      ]
-    }
-  ],
-  "variable": [
-    { "key": "baseUrl", "value": "http://localhost:4000/api/v1" },
-    { "key": "adminEmail", "value": "admin@campusclub.local" },
-    { "key": "adminPassword", "value": "Admin@1234" },
-    { "key": "userEmail", "value": "student240001@bue.edu.eg" },
-    { "key": "adminToken", "value": "" },
-    { "key": "userToken", "value": "" },
-    { "key": "userId", "value": "" },
-    { "key": "verificationToken", "value": "" },
-    { "key": "resetToken", "value": "" },
-    { "key": "eventId", "value": "" },
-    { "key": "announcementId", "value": "" },
-    { "key": "galleryId", "value": "" }
-  ]
+﻿{
+    "info":  {
+                 "_postman_id":  "a7fef1f8-55d4-4b99-b7a1-92ac8df076b4",
+                 "name":  "Campus Club Backend SOA API",
+                 "description":  "Postman collection for Campus Club Management System SOA backend via API Gateway.",
+                 "schema":  "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+             },
+    "item":  [
+                 {
+                     "name":  "Auth \u0026 Users",
+                     "item":  [
+                                  {
+                                      "name":  "Register User",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"displayName\": \"Student One\",\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"User@1234\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/auth/register"
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const json = pm.response.json();",
+                                                                                    "if (json?.data?._id) {",
+                                                                                    "  pm.collectionVariables.set(\u0027userId\u0027, json.data._id);",
+                                                                                    "}",
+                                                                                    "if (json?.meta?.verificationToken) {",
+                                                                                    "  pm.collectionVariables.set(\u0027verificationToken\u0027, json.meta.verificationToken);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Login Admin",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"email\": \"{{adminEmail}}\",\n  \"password\": \"{{adminPassword}}\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/auth/login"
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const json = pm.response.json();",
+                                                                                    "if (json?.data?.token) {",
+                                                                                    "  pm.collectionVariables.set(\u0027adminToken\u0027, json.data.token);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Login User (After Admin Approval)",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"User@1234\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/auth/login"
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const json = pm.response.json();",
+                                                                                    "if (json?.data?.token) {",
+                                                                                    "  pm.collectionVariables.set(\u0027userToken\u0027, json.data.token);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Forgot Password",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"email\": \"{{userEmail}}\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/auth/forgot-password"
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const json = pm.response.json();",
+                                                                                    "if (json?.meta?.resetToken) {",
+                                                                                    "  pm.collectionVariables.set(\u0027resetToken\u0027, json.meta.resetToken);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Reset Password",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"token\": \"{{resetToken}}\",\n  \"newPassword\": \"User@6789\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/auth/reset-password"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Request Email Verification",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"email\": \"{{userEmail}}\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/auth/verify-email/request"
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const json = pm.response.json();",
+                                                                                    "if (json?.meta?.verificationToken) {",
+                                                                                    "  pm.collectionVariables.set(\u0027verificationToken\u0027, json.meta.verificationToken);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Confirm Email Verification",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"token\": \"{{verificationToken}}\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/auth/verify-email/confirm"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Confirm Email Verification (GET Link Style)",
+                                      "request":  {
+                                                      "method":  "GET",
+                                                      "url":  "{{baseUrl}}/auth/verify-email/confirm?token={{verificationToken}}"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Get My Profile",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{userToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "GET",
+                                                      "url":  "{{baseUrl}}/users/me"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Update My Profile",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{userToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "PUT",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"displayName\": \"Student One Updated\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/users/me"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Update My Password",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{userToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "PUT",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"currentPassword\": \"User@1234\",\n  \"newPassword\": \"User@12345\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/users/me/password"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Update My Profile Image (URL)",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{userToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "PUT",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"imageUrl\": \"https://images.unsplash.com/photo-1511367461989-f85a21fda167\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/users/me/profile-image"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Update My Profile Image (File Upload - Cloudinary)",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{userToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "PUT",
+                                                      "body":  {
+                                                                   "mode":  "formdata",
+                                                                   "formdata":  [
+                                                                                    {
+                                                                                        "key":  "image",
+                                                                                        "type":  "file",
+                                                                                        "src":  [
+
+                                                                                                ]
+                                                                                    }
+                                                                                ]
+                                                               },
+                                                      "url":  "{{baseUrl}}/users/me/profile-image"
+                                                  }
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Admin - Membership",
+                     "item":  [
+                                  {
+                                      "name":  "List Members",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "GET",
+                                                      "url":  "{{baseUrl}}/admin/users"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Approve User",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "PATCH",
+                                                      "url":  "{{baseUrl}}/admin/users/{{userId}}/approve"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Reject User",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "PATCH",
+                                                      "url":  "{{baseUrl}}/admin/users/{{userId}}/reject"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Import Members CSV (Approved + Verified)",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "POST",
+                                                      "body":  {
+                                                                   "mode":  "formdata",
+                                                                   "formdata":  [
+                                                                                    {
+                                                                                        "key":  "file",
+                                                                                        "type":  "file",
+                                                                                        "src":  [
+
+                                                                                                ]
+                                                                                    }
+                                                                                ]
+                                                               },
+                                                      "url":  "{{baseUrl}}/admin/users/import-csv",
+                                                      "description":  "CSV headers must include email and one of displayName/display_name/name/full_name."
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Promote User To Admin",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "PATCH",
+                                                      "url":  "{{baseUrl}}/admin/users/{{userId}}/promote"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Login Promoted User As Admin",
+                                      "request":  {
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"User@1234\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/auth/login"
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const json = pm.response.json();",
+                                                                                    "if (json?.data?.token) {",
+                                                                                    "  pm.collectionVariables.set(\u0027secondAdminToken\u0027, json.data.token);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Events",
+                     "item":  [
+                                  {
+                                      "name":  "Create Event",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"title\": \"Welcome Session\",\n  \"description\": \"Orientation event for new members\",\n  \"date\": \"2027-01-15T15:00:00.000Z\",\n  \"location\": \"Main Hall\",\n  \"capacity\": 50\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/events"
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const json = pm.response.json();",
+                                                                                    "if (json?.data?._id) {",
+                                                                                    "  pm.collectionVariables.set(\u0027eventId\u0027, json.data._id);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "List Events (All)",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{userToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "GET",
+                                                      "url":  "{{baseUrl}}/events?type=all"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Get Event By Id",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{userToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "GET",
+                                                      "url":  "{{baseUrl}}/events/{{eventId}}"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Get Event By Id (Admin Includes Attendees)",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "GET",
+                                                      "url":  "{{baseUrl}}/events/{{eventId}}"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Update Event",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "PUT",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"location\": \"Auditorium A\",\n  \"capacity\": 60\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/events/{{eventId}}"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Delete Event",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "DELETE",
+                                                      "url":  "{{baseUrl}}/events/{{eventId}}"
+                                                  }
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "RSVP",
+                     "item":  [
+                                  {
+                                      "name":  "Create RSVP",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{userToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"eventId\": \"{{eventId}}\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/rsvps"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "List My RSVPs",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{userToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "GET",
+                                                      "url":  "{{baseUrl}}/rsvps/me"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "List Event Attendees (Admin)",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "GET",
+                                                      "url":  "{{baseUrl}}/events/{{eventId}}/attendees"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Cancel RSVP",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{userToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "DELETE",
+                                                      "url":  "{{baseUrl}}/rsvps/{{eventId}}"
+                                                  }
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Announcements",
+                     "item":  [
+                                  {
+                                      "name":  "Create Announcement",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"title\": \"Weekly Update\",\n  \"content\": \"Club meeting moved to Thursday at 5 PM.\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/announcements"
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const json = pm.response.json();",
+                                                                                    "if (json?.data?._id) {",
+                                                                                    "  pm.collectionVariables.set(\u0027announcementId\u0027, json.data._id);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "List Announcements",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{userToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "GET",
+                                                      "url":  "{{baseUrl}}/announcements"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Update Announcement",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "PUT",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"content\": \"Club meeting moved to Friday at 4 PM.\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/announcements/{{announcementId}}"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Delete Announcement",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "DELETE",
+                                                      "url":  "{{baseUrl}}/announcements/{{announcementId}}"
+                                                  }
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Gallery",
+                     "item":  [
+                                  {
+                                      "name":  "Add Gallery Photo (File Upload - Cloudinary)",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "POST",
+                                                      "body":  {
+                                                                   "mode":  "formdata",
+                                                                   "formdata":  [
+                                                                                    {
+                                                                                        "key":  "title",
+                                                                                        "value":  "Hackathon Day",
+                                                                                        "type":  "text"
+                                                                                    },
+                                                                                    {
+                                                                                        "key":  "description",
+                                                                                        "value":  "Photos from the annual coding hackathon event.",
+                                                                                        "type":  "text"
+                                                                                    },
+                                                                                    {
+                                                                                        "key":  "date",
+                                                                                        "value":  "2027-01-20T10:00:00.000Z",
+                                                                                        "type":  "text"
+                                                                                    },
+                                                                                    {
+                                                                                        "key":  "image",
+                                                                                        "type":  "file",
+                                                                                        "src":  [
+
+                                                                                                ]
+                                                                                    }
+                                                                                ]
+                                                               },
+                                                      "url":  "{{baseUrl}}/gallery"
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const json = pm.response.json();",
+                                                                                    "if (json?.data?._id) {",
+                                                                                    "  pm.collectionVariables.set(\u0027galleryId\u0027, json.data._id);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "Add Gallery Photo (URL)",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"title\": \"Hackathon Day\",\n  \"description\": \"Photos from the annual coding hackathon event.\",\n  \"date\": \"2027-01-20T10:00:00.000Z\",\n  \"imageUrl\": \"https://images.unsplash.com/photo-1519389950473-47ba0277781c\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/gallery"
+                                                  },
+                                      "event":  [
+                                                    {
+                                                        "listen":  "test",
+                                                        "script":  {
+                                                                       "type":  "text/javascript",
+                                                                       "exec":  [
+                                                                                    "const json = pm.response.json();",
+                                                                                    "if (json?.data?._id) {",
+                                                                                    "  pm.collectionVariables.set(\u0027galleryId\u0027, json.data._id);",
+                                                                                    "}"
+                                                                                ]
+                                                                   }
+                                                    }
+                                                ]
+                                  },
+                                  {
+                                      "name":  "List Gallery",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{userToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "GET",
+                                                      "url":  "{{baseUrl}}/gallery"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Update Gallery Photo",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "PUT",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"title\": \"Hackathon Day (Updated)\",\n  \"description\": \"Updated description for the gallery item.\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/gallery/{{galleryId}}"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Delete Gallery Photo",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "DELETE",
+                                                      "url":  "{{baseUrl}}/gallery/{{galleryId}}"
+                                                  }
+                                  }
+                              ]
+                 },
+                 {
+                     "name":  "Admin Chat",
+                     "item":  [
+                                  {
+                                      "name":  "Send Admin Chat Message (Admin #1)",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"message\": \"Hello from primary admin.\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/admin/chat/messages"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "Send Admin Chat Message (Admin #2)",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{secondAdminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "POST",
+                                                      "header":  [
+                                                                     {
+                                                                         "key":  "Content-Type",
+                                                                         "value":  "application/json"
+                                                                     }
+                                                                 ],
+                                                      "body":  {
+                                                                   "mode":  "raw",
+                                                                   "raw":  "{\n  \"message\": \"Hello from promoted admin.\"\n}"
+                                                               },
+                                                      "url":  "{{baseUrl}}/admin/chat/messages"
+                                                  }
+                                  },
+                                  {
+                                      "name":  "List Admin Chat Messages",
+                                      "request":  {
+                                                      "auth":  {
+                                                                   "type":  "bearer",
+                                                                   "bearer":  [
+                                                                                  {
+                                                                                      "key":  "token",
+                                                                                      "value":  "{{adminToken}}",
+                                                                                      "type":  "string"
+                                                                                  }
+                                                                              ]
+                                                               },
+                                                      "method":  "GET",
+                                                      "url":  "{{baseUrl}}/admin/chat/messages?limit=50"
+                                                  }
+                                  }
+                              ]
+                 }
+             ],
+    "variable":  [
+                     {
+                         "key":  "baseUrl",
+                         "value":  "http://localhost:4000/api/v1"
+                     },
+                     {
+                         "key":  "adminEmail",
+                         "value":  "admin@campusclub.local"
+                     },
+                     {
+                         "key":  "adminPassword",
+                         "value":  "Admin@1234"
+                     },
+                     {
+                         "key":  "userEmail",
+                         "value":  "student240001@bue.edu.eg"
+                     },
+                     {
+                         "key":  "adminToken",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "userToken",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "userId",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "verificationToken",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "resetToken",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "eventId",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "announcementId",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "galleryId",
+                         "value":  ""
+                     },
+                     {
+                         "key":  "secondAdminToken",
+                         "value":  ""
+                     }
+                 ]
 }
