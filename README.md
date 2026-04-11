@@ -101,10 +101,11 @@ http://localhost:4000/api/v1
 
 The development compose includes:
 
+- `mongodb` (Database)
 - `mailhog` (SMTP capture + web UI)
 - `backend` (single monolith API container)
 
-The backend connects to MongoDB using the values from `.env.development`. The compose file no longer starts a local MongoDB container.
+The backend connects to MongoDB using the values from `.env.development`.
 
 MailHog details:
 

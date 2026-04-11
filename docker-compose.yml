@@ -1,4 +1,18 @@
 services:
+  mongo:
+    image: mongo:7
+    container_name: campus-club-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
   mailhog:
     image: mailhog/mailhog
     container_name: campus-club-mailhog
@@ -16,6 +30,8 @@ services:
       MONOLITHIC_MODE: "true"
       PORT: 4000
       MONOLITH_PORT: 4000
+      MONGO_URI: mongodb://mongo:27017/campus_club
+      MONGO_DB_NAME: campus_club
       SMTP_HOST: mailhog
       SMTP_PORT: 1025
       SMTP_SECURE: "false"
@@ -25,6 +41,8 @@ services:
       CHOKIDAR_USEPOLLING: "true"
       CHOKIDAR_INTERVAL: "1000"
     depends_on:
+      mongo:
+        condition: service_healthy
       mailhog:
         condition: service_started
     ports:
@@ -34,4 +52,5 @@ services:
       - backend_node_modules:/usr/src/app/node_modules
 
 volumes:
+  mongo_data:
   backend_node_modules:
