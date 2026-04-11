@@ -73,6 +73,7 @@ describe("auth.service (unit)", () => {
       signOtpToken: jest.fn().mockReturnValue("otp-token"),
       verifyOtpToken: jest.fn(),
     };
+    const sendEmailMock = jest.fn().mockResolvedValue(true);
 
     jest.doMock("../../../../src/models/user.model", () => UserMock);
     jest.doMock("bcryptjs", () => bcryptMock);
@@ -81,7 +82,7 @@ describe("auth.service (unit)", () => {
       deleteCloudinaryImage: jest.fn(),
     }));
     jest.doMock("../../../../src/utils/mailer.util", () => ({
-      sendEmail: jest.fn().mockResolvedValue(false),
+      sendEmail: sendEmailMock,
     }));
     jest.doMock("../../../../src/utils/email.util", () => ({
       matchBueEmail: jest.fn(() => ["", "student", "24"]),
@@ -99,6 +100,12 @@ describe("auth.service (unit)", () => {
     expect(result.otpToken).toBe("otp-token");
     expect(result.otpCode).toMatch(/^\d{6}$/);
     expect(userDoc.save).toHaveBeenCalled();
+    expect(sendEmailMock).toHaveBeenCalledTimes(1);
+    expect(sendEmailMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        to: "student240002@bue.edu.eg",
+      })
+    );
   });
 
   test("verifyLoginOtp issues access token when OTP code is valid", async () => {

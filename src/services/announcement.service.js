@@ -64,8 +64,8 @@ const updateAnnouncement = async (id, payload) => {
     id,
     normalizeAnnouncementPayload(payload),
     {
-    new: true,
-    runValidators: true,
+      returnDocument: "after",
+      runValidators: true,
     }
   );
 

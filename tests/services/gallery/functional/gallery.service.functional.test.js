@@ -3,13 +3,18 @@ const {
   connectTestDatabase,
   clearTestDatabase,
   disconnectTestDatabase,
+  runIfDatabaseAvailable,
+  logSkipIfDatabaseUnavailable,
 } = require("../../../helpers/test-db");
 const galleryService = require("../../../../src/services/gallery.service");
 const GalleryPhoto = require("../../../../src/models/gallery-photo.model");
 
 describe("gallery.service (functional)", () => {
   beforeAll(async () => {
-    await connectTestDatabase();
+    const connected = await connectTestDatabase();
+    if (!connected) {
+      logSkipIfDatabaseUnavailable();
+    }
   });
 
   afterEach(async () => {
@@ -20,7 +25,9 @@ describe("gallery.service (functional)", () => {
     await disconnectTestDatabase();
   });
 
-  test("creates, lists, updates, and deletes gallery photos", async () => {
+  runIfDatabaseAvailable(
+    "creates, lists, updates, and deletes gallery photos",
+    async () => {
     const adminId = new mongoose.Types.ObjectId();
     const created = await galleryService.createPhoto(
       {
@@ -48,5 +55,6 @@ describe("gallery.service (functional)", () => {
 
     await galleryService.deletePhoto(created._id);
     expect(await GalleryPhoto.countDocuments({ _id: created._id })).toBe(0);
-  });
+    }
+  );
 });

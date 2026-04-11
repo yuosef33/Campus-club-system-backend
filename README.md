@@ -131,6 +131,28 @@ Production-style local run:
 npm run start
 ```
 
+## Testing
+
+Run all tests:
+
+```bash
+npm test
+```
+
+Run only unit tests:
+
+```bash
+npm run test:unit
+```
+
+Run only functional tests:
+
+```bash
+npm run test:functional
+```
+
+Functional tests require a database connection. Set `TEST_MONGO_URI` (and optionally `TEST_DB_NAME`) to a reachable MongoDB instance. In Docker Compose development, this is preconfigured to `mongodb://mongo:27017/campus_club_test`.
+
 ## Production (Optional)
 
 ```bash

@@ -37,6 +37,7 @@ describe("chat.service (unit)", () => {
 
   test("listMessages applies limit and returns chronological order", async () => {
     const rows = [{ message: "newer" }, { message: "older" }];
+    const expected = rows.slice().reverse();
     const chain = {
       sort: jest.fn().mockReturnThis(),
       limit: jest.fn().mockResolvedValue(rows),
@@ -67,6 +68,6 @@ describe("chat.service (unit)", () => {
 
     expect(ChatMock.find).toHaveBeenCalledTimes(1);
     expect(Array.isArray(output)).toBe(true);
-    expect(output).toEqual(rows.slice().reverse());
+    expect(output).toEqual(expected);
   });
 });

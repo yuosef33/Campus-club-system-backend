@@ -34,6 +34,8 @@ services:
       MONOLITH_PORT: 4000
       MONGO_URI: mongodb://mongo:27017/campus_club
       MONGO_DB_NAME: campus_club
+      TEST_MONGO_URI: mongodb://mongo:27017/campus_club_test
+      TEST_DB_NAME: campus_club_test
       SMTP_HOST: mailhog
       SMTP_PORT: 1025
       SMTP_SECURE: "false"

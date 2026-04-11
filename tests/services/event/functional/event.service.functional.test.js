@@ -3,6 +3,8 @@ const {
   connectTestDatabase,
   clearTestDatabase,
   disconnectTestDatabase,
+  runIfDatabaseAvailable,
+  logSkipIfDatabaseUnavailable,
 } = require("../../../helpers/test-db");
 const eventService = require("../../../../src/services/event.service");
 const Event = require("../../../../src/models/event.model");
@@ -10,7 +12,10 @@ const RSVP = require("../../../../src/models/rsvp.model");
 
 describe("event.service (functional)", () => {
   beforeAll(async () => {
-    await connectTestDatabase();
+    const connected = await connectTestDatabase();
+    if (!connected) {
+      logSkipIfDatabaseUnavailable();
+    }
   });
 
   afterEach(async () => {
@@ -21,7 +26,9 @@ describe("event.service (functional)", () => {
     await disconnectTestDatabase();
   });
 
-  test("creates, updates, paginates, reserves/releases seats, and deletes with RSVP cascade", async () => {
+  runIfDatabaseAvailable(
+    "creates, updates, paginates, reserves/releases seats, and deletes with RSVP cascade",
+    async () => {
     const adminId = new mongoose.Types.ObjectId();
     const futureDate = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 
@@ -63,5 +70,6 @@ describe("event.service (functional)", () => {
 
     expect(await Event.countDocuments({ _id: created._id })).toBe(0);
     expect(await RSVP.countDocuments({ eventId: created._id })).toBe(0);
-  });
+    }
+  );
 });

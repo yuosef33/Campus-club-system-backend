@@ -4,6 +4,8 @@ const {
   connectTestDatabase,
   clearTestDatabase,
   disconnectTestDatabase,
+  runIfDatabaseAvailable,
+  logSkipIfDatabaseUnavailable,
 } = require("../../../helpers/test-db");
 const rsvpService = require("../../../../src/services/rsvp.service");
 const Event = require("../../../../src/models/event.model");
@@ -12,7 +14,10 @@ const User = require("../../../../src/models/user.model");
 
 describe("rsvp.service (functional)", () => {
   beforeAll(async () => {
-    await connectTestDatabase();
+    const connected = await connectTestDatabase();
+    if (!connected) {
+      logSkipIfDatabaseUnavailable();
+    }
   });
 
   afterEach(async () => {
@@ -23,7 +28,9 @@ describe("rsvp.service (functional)", () => {
     await disconnectTestDatabase();
   });
 
-  test("creates, lists, and cancels RSVPs while syncing event seat counts", async () => {
+  runIfDatabaseAvailable(
+    "creates, lists, and cancels RSVPs while syncing event seat counts",
+    async () => {
     const admin = await User.create({
       displayName: "Admin",
       email: "admin240100@bue.edu.eg",
@@ -84,5 +91,6 @@ describe("rsvp.service (functional)", () => {
     const afterCancelEvent = await Event.findById(event._id);
     expect(afterCancelEvent.attendeeCount).toBe(0);
     expect(await RSVP.countDocuments({ eventId: event._id })).toBe(0);
-  });
+    }
+  );
 });

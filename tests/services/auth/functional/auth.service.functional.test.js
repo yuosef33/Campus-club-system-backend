@@ -3,6 +3,8 @@ const {
   connectTestDatabase,
   clearTestDatabase,
   disconnectTestDatabase,
+  runIfDatabaseAvailable,
+  logSkipIfDatabaseUnavailable,
 } = require("../../../helpers/test-db");
 const authService = require("../../../../src/services/auth.service");
 const User = require("../../../../src/models/user.model");
@@ -10,7 +12,10 @@ const { USER_STATUS } = require("../../../../src/constants/roles");
 
 describe("auth.service (functional)", () => {
   beforeAll(async () => {
-    await connectTestDatabase();
+    const connected = await connectTestDatabase();
+    if (!connected) {
+      logSkipIfDatabaseUnavailable();
+    }
   });
 
   afterEach(async () => {
@@ -21,7 +26,9 @@ describe("auth.service (functional)", () => {
     await disconnectTestDatabase();
   });
 
-  test("register creates user with OTP disabled by default", async () => {
+  runIfDatabaseAvailable(
+    "register creates user with OTP disabled by default",
+    async () => {
     const result = await authService.register({
       displayName: "Student One",
       email: "student240001@bue.edu.eg",
@@ -32,9 +39,12 @@ describe("auth.service (functional)", () => {
     expect(result.user.otpEnabled).toBe(false);
     expect(result.user.status).toBe(USER_STATUS.PENDING);
     expect(result.user.email).toBe("student240001@bue.edu.eg");
-  });
+    }
+  );
 
-  test("supports optional OTP login flow after enabling OTP", async () => {
+  runIfDatabaseAvailable(
+    "supports optional OTP login flow after enabling OTP",
+    async () => {
     const password = "User@1234";
     const user = await User.create({
       displayName: "Student Two",
@@ -72,5 +82,6 @@ describe("auth.service (functional)", () => {
     });
     expect(typeof verified.token).toBe("string");
     expect(verified.user._id.toString()).toBe(user._id.toString());
-  });
+    }
+  );
 });

@@ -114,7 +114,7 @@ const reserveSeat = async (eventId, options = {}) => {
       $expr: { $lt: ["$attendeeCount", "$capacity"] },
     },
     { $inc: { attendeeCount: 1 } },
-    { new: true, ...(session ? { session } : {}) }
+    { returnDocument: "after", ...(session ? { session } : {}) }
   );
 
   if (!event) {
@@ -144,7 +144,7 @@ const releaseSeat = async (eventId, options = {}) => {
   const event = await Event.findOneAndUpdate(
     { _id: eventId, attendeeCount: { $gt: 0 } },
     { $inc: { attendeeCount: -1 } },
-    { new: true, ...(session ? { session } : {}) }
+    { returnDocument: "after", ...(session ? { session } : {}) }
   );
 
   if (!event) {

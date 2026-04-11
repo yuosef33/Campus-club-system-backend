@@ -3,6 +3,8 @@ const {
   connectTestDatabase,
   clearTestDatabase,
   disconnectTestDatabase,
+  runIfDatabaseAvailable,
+  logSkipIfDatabaseUnavailable,
 } = require("../../../helpers/test-db");
 const announcementService = require("../../../../src/services/announcement.service");
 const Announcement = require("../../../../src/models/announcement.model");
@@ -10,7 +12,10 @@ const { ROLES } = require("../../../../src/constants/roles");
 
 describe("announcement.service (functional)", () => {
   beforeAll(async () => {
-    await connectTestDatabase();
+    const connected = await connectTestDatabase();
+    if (!connected) {
+      logSkipIfDatabaseUnavailable();
+    }
   });
 
   afterEach(async () => {
@@ -21,7 +26,9 @@ describe("announcement.service (functional)", () => {
     await disconnectTestDatabase();
   });
 
-  test("creates, lists, updates, and deletes announcements", async () => {
+  runIfDatabaseAvailable(
+    "creates, lists, updates, and deletes announcements",
+    async () => {
     const adminId = new mongoose.Types.ObjectId();
 
     const created = await announcementService.createAnnouncement(
@@ -54,5 +61,6 @@ describe("announcement.service (functional)", () => {
     await announcementService.deleteAnnouncement(created._id);
     const remaining = await Announcement.countDocuments({});
     expect(remaining).toBe(0);
-  });
+    }
+  );
 });
