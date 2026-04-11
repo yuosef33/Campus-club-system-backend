@@ -189,6 +189,15 @@ const rejectUser = asyncHandler(async (req, res) => {
   });
 });
 
+const promoteUserToAdmin = asyncHandler(async (req, res) => {
+  const user = await authService.promoteUserToAdmin(req.params.id);
+  res.status(200).json({
+    success: true,
+    message: "User promoted to admin successfully.",
+    data: user,
+  });
+});
+
 const importMembersCsv = asyncHandler(async (req, res) => {
   if (!req.file) {
     throw new ApiError(400, "CSV file is required.");
@@ -229,5 +238,6 @@ module.exports = {
   listUsers,
   approveUser,
   rejectUser,
+  promoteUserToAdmin,
   importMembersCsv,
 };
