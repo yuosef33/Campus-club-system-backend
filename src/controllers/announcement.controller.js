@@ -14,7 +14,7 @@ const createAnnouncement = asyncHandler(async (req, res) => {
 });
 
 const listAnnouncements = asyncHandler(async (req, res) => {
-  const announcements = await announcementService.listAnnouncements();
+  const announcements = await announcementService.listAnnouncements(req.user);
   res.status(200).json({ success: true, data: announcements });
 });
 

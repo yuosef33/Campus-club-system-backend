@@ -91,6 +91,7 @@ const sanitizeUser = (userDoc) => ({
   _id: userDoc._id,
   displayName: userDoc.displayName,
   email: userDoc.email,
+  phoneNumber: userDoc.phoneNumber || null,
   role: userDoc.role,
   status: userDoc.status,
   emailVerified: Boolean(userDoc.emailVerified),
@@ -187,7 +188,16 @@ const issuePasswordReset = async (user) => {
   };
 };
 
-const register = async ({ displayName, email, password }) => {
+const normalizePhoneNumber = (phoneNumber) => {
+  if (phoneNumber === undefined || phoneNumber === null) {
+    return null;
+  }
+
+  const normalized = String(phoneNumber).trim();
+  return normalized || null;
+};
+
+const register = async ({ displayName, email, password, phoneNumber }) => {
   const normalizedEmail = email.toLowerCase();
   const existing = await User.findOne({ email: normalizedEmail });
   if (existing) {
@@ -202,6 +212,7 @@ const register = async ({ displayName, email, password }) => {
   const user = await User.create({
     displayName: displayName.trim(),
     email: normalizedEmail,
+    phoneNumber: normalizePhoneNumber(phoneNumber),
     passwordHash,
     role: ROLES.USER,
     status: USER_STATUS.PENDING,
@@ -403,10 +414,19 @@ const getUserById = async (userId) => {
   return sanitizeUser(user);
 };
 
-const updateProfile = async (userId, { displayName }) => {
+const updateProfile = async (userId, profilePayload) => {
+  const { displayName, phoneNumber } = profilePayload;
+  const updates = {
+    displayName: displayName.trim(),
+  };
+
+  if (Object.prototype.hasOwnProperty.call(profilePayload, "phoneNumber")) {
+    updates.phoneNumber = normalizePhoneNumber(phoneNumber);
+  }
+
   const user = await User.findByIdAndUpdate(
     userId,
-    { displayName: displayName.trim() },
+    updates,
     { new: true, runValidators: true }
   );
 
@@ -484,6 +504,7 @@ const getUsersByIds = async (userIds) => {
     _id: user._id.toString(),
     displayName: user.displayName,
     email: user.email,
+    phoneNumber: user.phoneNumber || null,
     role: user.role,
     status: user.status,
     emailVerified: Boolean(user.emailVerified),

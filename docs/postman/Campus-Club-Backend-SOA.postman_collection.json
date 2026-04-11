@@ -1,8 +1,8 @@
 {
   "info": {
     "_postman_id": "a7fef1f8-55d4-4b99-b7a1-92ac8df076b4",
-    "name": "Campus Club Backend SOA API",
-    "description": "Postman collection for Campus Club Management System SOA backend via API Gateway.",
+    "name": "Campus Club Backend Monolith API",
+    "description": "Postman collection for the Campus Club Management System monolith backend.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -18,7 +18,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Student One\",\n  \"email\": \"{{userEmail}}\",\n  \"password\": \"User@1234\"\n}"
+              "raw": "{\n  \"displayName\": \"Student One\",\n  \"email\": \"{{userEmail}}\",\n  \"phoneNumber\": \"+201001234567\",\n  \"password\": \"User@1234\"\n}"
             },
             "url": "{{baseUrl}}/auth/register"
           },
@@ -215,7 +215,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"displayName\": \"Student One Updated\"\n}"
+              "raw": "{\n  \"displayName\": \"Student One Updated\",\n  \"phoneNumber\": \"+201009998887\"\n}"
             },
             "url": "{{baseUrl}}/users/me"
           }
@@ -538,7 +538,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"title\": \"Weekly Update\",\n  \"content\": \"Club meeting moved to Thursday at 5 PM.\"\n}"
+              "raw": "{\n  \"title\": \"Weekly Update\",\n  \"content\": \"Club meeting moved to Thursday at 5 PM.\",\n  \"pinned\": true,\n  \"expiresAt\": \"2027-01-31T23:59:59.000Z\"\n}"
             },
             "url": "{{baseUrl}}/announcements"
           },
@@ -585,7 +585,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"content\": \"Club meeting moved to Friday at 4 PM.\"\n}"
+              "raw": "{\n  \"content\": \"Club meeting moved to Friday at 4 PM.\",\n  \"pinned\": false,\n  \"expiresAt\": \"2027-02-07T23:59:59.000Z\"\n}"
             },
             "url": "{{baseUrl}}/announcements/{{announcementId}}"
           }

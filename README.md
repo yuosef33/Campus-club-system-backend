@@ -49,7 +49,7 @@ campus-club-backend/
 
 - Node.js
 - Express
-- MongoDB + Mongoose
+- MongoDB Atlas + Mongoose
 - JWT (`jsonwebtoken`)
 - `bcryptjs`
 - `multer` (image upload handling)
@@ -79,9 +79,13 @@ campus-club-backend/
 
 1. Create development env file:
 
-```bash
-cp .env.example .env.development
-```
+Copy `.env.example` to `.env.development` and set at least:
+
+- `MONGO_URI` to your MongoDB Atlas connection string
+- `MONGO_DB_NAME` to your target database
+- `JWT_SECRET` to a real secret
+
+If you're using Atlas, make sure your current IP is allowed in Atlas Network Access before starting the app.
 
 2. Start development stack:
 
@@ -97,9 +101,10 @@ http://localhost:4000/api/v1
 
 The development compose includes:
 
-- `mongo` (MongoDB)
 - `mailhog` (SMTP capture + web UI)
 - `backend` (single monolith API container)
+
+The backend connects to MongoDB using the values from `.env.development`. The compose file no longer starts a local MongoDB container.
 
 MailHog details:
 
@@ -108,6 +113,8 @@ MailHog details:
 - Web inbox UI: `http://localhost:8025`
 
 ## Local Run (without Docker)
+
+Create a local `.env` file, then set your Atlas `MONGO_URI`, `MONGO_DB_NAME`, and `JWT_SECRET`.
 
 ```bash
 npm install
@@ -152,6 +159,14 @@ Optional:
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_SECURE`, `SMTP_USER`, `SMTP_PASS`, `SMTP_FROM` for verification/password-reset email delivery
 - `LOG_DIR` (default `./logs`)
 - `ENABLE_FILE_LOGS` (default `true`)
+
+## Data Model Updates
+
+Recent additions:
+
+- `User.phoneNumber`: optional phone number captured on registration and profile update
+- `Announcement.pinned`: pinned announcements are listed first
+- `Announcement.expiresAt`: expired announcements are hidden from non-admin users
 
 ## API Routes
 
@@ -211,6 +226,12 @@ Import:
 Sample CSV:
 
 - `docs/postman/sample-members-import.csv`
+
+The Postman collection has been updated to:
+
+- include `phoneNumber` in user registration and profile update examples
+- include `pinned` and `expiresAt` in announcement create/update examples
+- describe the current monolith API instead of the old SOA wording
 
 Default scripts and Docker flows target the monolith runtime in `src/server.js`.
 

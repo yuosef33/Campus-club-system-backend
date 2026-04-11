@@ -3,6 +3,7 @@ const {
   isValidEmail,
   isStrongPassword,
   isValidObjectId,
+  isValidPhoneNumber,
 } = require("../validation/rules");
 const { ROLES, USER_STATUS } = require("../constants/roles");
 const { matchBueEmail, isValidBueYear } = require("../utils/email.util");
@@ -22,6 +23,12 @@ const validateRegister = validate({
     required: true,
     type: "string",
     custom: (value) => (validateBueEmail(value)),
+  },
+  phoneNumber: {
+    required: false,
+    type: "string",
+    custom: (value) =>
+      isValidPhoneNumber(value) ? null : "phoneNumber must be a valid phone number.",
   },
   password: {
     required: true,
@@ -83,6 +90,12 @@ const validateEmailVerificationConfirmQuery = validate(
 
 const validateProfileUpdate = validate({
   displayName: { required: true, type: "string", minLength: 2, maxLength: 60 },
+  phoneNumber: {
+    required: false,
+    type: "string",
+    custom: (value) =>
+      isValidPhoneNumber(value) ? null : "phoneNumber must be a valid phone number.",
+  },
 });
 
 const validatePasswordUpdate = validate({

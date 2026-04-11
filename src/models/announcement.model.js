@@ -14,6 +14,14 @@ const announcementSchema = new mongoose.Schema(
       trim: true,
       maxlength: 5000,
     },
+    pinned: {
+      type: Boolean,
+      default: false,
+    },
+    expiresAt: {
+      type: Date,
+      default: null,
+    },
     createdBy: {
       type: String,
       required: true,
