@@ -9,6 +9,7 @@ const {
 const authService = require("../../../../src/services/auth.service");
 const User = require("../../../../src/models/user.model");
 const { USER_STATUS } = require("../../../../src/constants/roles");
+const { generateTotpCode } = require("../../../../src/utils/totp");
 
 describe("auth.service (functional)", () => {
   beforeAll(async () => {
@@ -63,10 +64,22 @@ describe("auth.service (functional)", () => {
     expect(loginWithoutOtp.requiresOtp).toBe(false);
     expect(typeof loginWithoutOtp.token).toBe("string");
 
-    const updatedUser = await authService.updateOtpSettings(user._id, {
+    const setupResult = await authService.updateOtpSettings(user._id, {
       enabled: true,
     });
-    expect(updatedUser.otpEnabled).toBe(true);
+    expect(setupResult.otpSetup?.required).toBe(true);
+    expect(setupResult.otpSetup?.setupToken).toBeTruthy();
+    expect(setupResult.otpSetup?.manualEntryKey).toBeTruthy();
+
+    const setupOtpCode = generateTotpCode({
+      secret: setupResult.otpSetup.manualEntryKey,
+    });
+    const enabledResult = await authService.updateOtpSettings(user._id, {
+      enabled: true,
+      setupToken: setupResult.otpSetup.setupToken,
+      otpCode: setupOtpCode,
+    });
+    expect(enabledResult.user.otpEnabled).toBe(true);
 
     const otpChallenge = await authService.login({
       email: user.email,
@@ -74,11 +87,16 @@ describe("auth.service (functional)", () => {
     });
     expect(otpChallenge.requiresOtp).toBe(true);
     expect(otpChallenge.otpToken).toBeTruthy();
-    expect(otpChallenge.otpCode).toMatch(/^\d{6}$/);
+    expect(otpChallenge.otpCode).toBeUndefined();
+
+    const reloadedUser = await User.findById(user._id);
+    const loginOtpCode = generateTotpCode({
+      secret: reloadedUser.otpSecret,
+    });
 
     const verified = await authService.verifyLoginOtp({
       otpToken: otpChallenge.otpToken,
-      otpCode: otpChallenge.otpCode,
+      otpCode: loginOtpCode,
     });
     expect(typeof verified.token).toBe("string");
     expect(verified.user._id.toString()).toBe(user._id.toString());

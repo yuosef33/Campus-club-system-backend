@@ -121,6 +121,8 @@ const validatePasswordUpdate = validate({
 
 const validateOtpSettings = validate({
   enabled: { required: true, type: "boolean" },
+  otpCode: { required: false, type: "string", pattern: /^\d{6}$/ },
+  setupToken: { required: false, type: "string", minLength: 20 },
 });
 
 const validateAdminUserFilters = validate(

@@ -7,6 +7,11 @@ const {
   signOtpToken,
   verifyOtpToken,
 } = require("../utils/jwt");
+const {
+  generateBase32Secret,
+  verifyTotpCode,
+  buildOtpAuthUrl,
+} = require("../utils/totp");
 const { ROLES, USER_STATUS } = require("../constants/roles");
 const {
   deleteCloudinaryImage,
@@ -22,9 +27,7 @@ const EMAIL_VERIFICATION_TOKEN_TTL_MINUTES = Number(
 const PASSWORD_RESET_TOKEN_TTL_MINUTES = Number(
   process.env.PASSWORD_RESET_TOKEN_TTL_MINUTES || 60
 );
-const LOGIN_OTP_TTL_MINUTES = Number(
-  process.env.LOGIN_OTP_TTL_MINUTES || 10
-);
+const OTP_ISSUER = process.env.OTP_ISSUER || "CampusClub";
 
 const buildTokenPayload = (user) => ({
   userId: user._id.toString(),
@@ -36,8 +39,6 @@ const buildTokenPayload = (user) => ({
 
 const hashVerificationToken = (token) =>
   crypto.createHash("sha256").update(token).digest("hex");
-const hashOtpCode = (otpCode) =>
-  crypto.createHash("sha256").update(otpCode).digest("hex");
 
 const buildVerificationLink = (token) => {
   const explicitBaseUrl = process.env.FRONTEND_VERIFY_EMAIL_URL;
@@ -89,17 +90,24 @@ const createPasswordResetTokenPayload = () => {
   };
 };
 
-const createLoginOtpPayload = () => {
-  const otpCode = String(crypto.randomInt(0, 1000000)).padStart(6, "0");
-  const otpCodeHash = hashOtpCode(otpCode);
-  const expiresAt = new Date(
-    Date.now() + LOGIN_OTP_TTL_MINUTES * 60 * 1000
-  );
+const createOtpSetupPayload = (user) => {
+  const secret = generateBase32Secret();
+  const setupToken = signOtpToken({
+    userId: user._id.toString(),
+    purpose: "otp_setup",
+    secret,
+  });
 
   return {
-    otpCode,
-    otpCodeHash,
-    expiresAt,
+    required: true,
+    setupToken,
+    manualEntryKey: secret,
+    otpauthUrl: buildOtpAuthUrl({
+      secret,
+      accountName: user.email,
+      issuer: OTP_ISSUER,
+    }),
+    issuer: OTP_ISSUER,
   };
 };
 
@@ -213,46 +221,6 @@ const issuePasswordReset = async (user) => {
   };
 };
 
-const issueLoginOtp = async (user) => {
-  const { otpCode, otpCodeHash, expiresAt } = createLoginOtpPayload();
-  user.otpLoginCodeHash = otpCodeHash;
-  user.otpLoginCodeExpiresAt = expiresAt;
-  await user.save();
-
-  const subject = "Your Campus Club login OTP code";
-  const text = `Your login OTP code is: ${otpCode}. It expires at ${expiresAt.toISOString()}.`;
-  const html = `<p>Your login OTP code is: <strong>${otpCode}</strong></p><p>It expires at ${expiresAt.toISOString()}.</p>`;
-
-  let sent = false;
-  try {
-    sent = await sendEmail({
-      to: user.email,
-      subject,
-      text,
-      html,
-    });
-  } catch (error) {
-    sent = false;
-    console.error("[auth-service] failed to send login otp email:", error.message);
-  }
-
-  if (!sent) {
-    console.log(
-      `[auth-service] login OTP email was not sent for ${user.email}. Code expires at ${expiresAt.toISOString()}.`
-    );
-
-    if (process.env.NODE_ENV === "production") {
-      throw new ApiError(503, "Unable to deliver OTP code. Please try again.");
-    }
-  }
-
-  return {
-    sent,
-    otpExpiresAt: expiresAt,
-    otpCode: process.env.NODE_ENV === "production" ? undefined : otpCode,
-  };
-};
-
 const normalizePhoneNumber = (phoneNumber) => {
   if (phoneNumber === undefined || phoneNumber === null) {
     return null;
@@ -314,8 +282,12 @@ const login = async ({ email, password }) => {
     throw new ApiError(403, "Your account has been rejected by the admin.");
   }
 
+  if (user.otpEnabled && !user.otpSecret) {
+    user.otpEnabled = false;
+    await user.save();
+  }
+
   if (user.otpEnabled) {
-    const otp = await issueLoginOtp(user);
     const otpToken = signOtpToken({
       userId: user._id.toString(),
       purpose: "login_otp",
@@ -324,8 +296,6 @@ const login = async ({ email, password }) => {
     return {
       requiresOtp: true,
       otpToken,
-      otpExpiresAt: otp.otpExpiresAt,
-      ...(otp.otpCode ? { otpCode: otp.otpCode } : {}),
     };
   }
 
@@ -370,22 +340,22 @@ const verifyLoginOtp = async ({ otpToken, otpCode }) => {
     throw new ApiError(400, "OTP is disabled for this account.");
   }
 
-  if (
-    !user.otpLoginCodeHash ||
-    !user.otpLoginCodeExpiresAt ||
-    user.otpLoginCodeExpiresAt <= new Date()
-  ) {
-    throw new ApiError(401, "OTP code is invalid or expired.");
+  if (!user.otpSecret) {
+    throw new ApiError(
+      400,
+      "Authenticator OTP is not configured for this account."
+    );
   }
 
-  const otpCodeHash = hashOtpCode(normalizedOtpCode);
-  if (otpCodeHash !== user.otpLoginCodeHash) {
+  const isValidCode = verifyTotpCode({
+    secret: user.otpSecret,
+    token: normalizedOtpCode,
+    window: 1,
+  });
+
+  if (!isValidCode) {
     throw new ApiError(401, "OTP code is invalid or expired.");
   }
-
-  user.otpLoginCodeHash = null;
-  user.otpLoginCodeExpiresAt = null;
-  await user.save();
 
   const token = signAccessToken(buildTokenPayload(user));
   return {
@@ -465,8 +435,6 @@ const resetPassword = async ({ token, newPassword }) => {
   user.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
   user.passwordResetTokenHash = null;
   user.passwordResetTokenExpiresAt = null;
-  user.otpLoginCodeHash = null;
-  user.otpLoginCodeExpiresAt = null;
   await user.save();
 };
 
@@ -590,26 +558,77 @@ const updatePassword = async (userId, { currentPassword, newPassword }) => {
   user.passwordHash = await bcrypt.hash(newPassword, SALT_ROUNDS);
   user.passwordResetTokenHash = null;
   user.passwordResetTokenExpiresAt = null;
-  user.otpLoginCodeHash = null;
-  user.otpLoginCodeExpiresAt = null;
   await user.save();
 };
 
-const updateOtpSettings = async (userId, { enabled }) => {
+const updateOtpSettings = async (userId, { enabled, otpCode, setupToken }) => {
   const user = await User.findById(userId);
   if (!user) {
     throw new ApiError(404, "User not found.");
   }
 
-  user.otpEnabled = Boolean(enabled);
-
-  if (!user.otpEnabled) {
-    user.otpLoginCodeHash = null;
-    user.otpLoginCodeExpiresAt = null;
+  if (!enabled) {
+    user.otpEnabled = false;
+    user.otpSecret = null;
+    await user.save();
+    return {
+      user: sanitizeUser(user),
+      otpSetup: null,
+    };
   }
 
+  const normalizedSetupToken = String(setupToken || "").trim();
+  const normalizedOtpCode = String(otpCode || "").trim();
+
+  if (!normalizedSetupToken && !normalizedOtpCode) {
+    if (user.otpEnabled && user.otpSecret) {
+      return {
+        user: sanitizeUser(user),
+        otpSetup: null,
+      };
+    }
+
+    return {
+      user: sanitizeUser(user),
+      otpSetup: createOtpSetupPayload(user),
+    };
+  }
+
+  if (!normalizedSetupToken || !normalizedOtpCode) {
+    throw new ApiError(400, "setupToken and otpCode are required to verify OTP setup.");
+  }
+
+  let payload;
+  try {
+    payload = verifyOtpToken(normalizedSetupToken);
+  } catch (error) {
+    throw new ApiError(401, "Invalid or expired OTP setup token.");
+  }
+
+  if (
+    payload?.purpose !== "otp_setup" ||
+    !payload?.secret ||
+    payload?.userId !== user._id.toString()
+  ) {
+    throw new ApiError(401, "Invalid OTP setup token.");
+  }
+
+  const isValidCode = verifyTotpCode({
+    secret: payload.secret,
+    token: normalizedOtpCode,
+    window: 1,
+  });
+  if (!isValidCode) {
+    throw new ApiError(400, "Invalid authenticator OTP code.");
+  }
+
+  user.otpEnabled = true;
+  user.otpSecret = payload.secret;
   await user.save();
-  return sanitizeUser(user);
+  return {
+    user: sanitizeUser(user),
+    otpSetup: null,
+  };
 };
 
 const updateProfileImage = async (userId, imagePayload) => {

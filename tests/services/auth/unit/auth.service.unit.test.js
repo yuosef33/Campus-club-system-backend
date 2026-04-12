@@ -1,5 +1,3 @@
-const crypto = require("crypto");
-
 describe("auth.service (unit)", () => {
   beforeEach(() => {
     jest.resetModules();
@@ -40,6 +38,11 @@ describe("auth.service (unit)", () => {
       matchBueEmail: jest.fn(() => ["", "student", "24"]),
       isValidBueYear: jest.fn(() => true),
     }));
+    jest.doMock("../../../../src/utils/totp", () => ({
+      generateBase32Secret: jest.fn().mockReturnValue("OTPSECRET"),
+      verifyTotpCode: jest.fn().mockReturnValue(true),
+      buildOtpAuthUrl: jest.fn().mockReturnValue("otpauth://totp/test"),
+    }));
 
     const service = require("../../../../src/services/auth.service");
 
@@ -53,7 +56,7 @@ describe("auth.service (unit)", () => {
     expect(jwtMock.signAccessToken).toHaveBeenCalledTimes(1);
   });
 
-  test("login returns OTP challenge when OTP is enabled", async () => {
+  test("login returns authenticator OTP challenge when OTP is enabled", async () => {
     const userDoc = {
       _id: { toString: () => "u2" },
       email: "student240002@bue.edu.eg",
@@ -62,6 +65,7 @@ describe("auth.service (unit)", () => {
       role: "user",
       status: "approved",
       otpEnabled: true,
+      otpSecret: "OTPSECRET",
       emailVerified: true,
       save: jest.fn().mockResolvedValue(undefined),
     };
@@ -73,7 +77,6 @@ describe("auth.service (unit)", () => {
       signOtpToken: jest.fn().mockReturnValue("otp-token"),
       verifyOtpToken: jest.fn(),
     };
-    const sendEmailMock = jest.fn().mockResolvedValue(true);
 
     jest.doMock("../../../../src/models/user.model", () => UserMock);
     jest.doMock("bcryptjs", () => bcryptMock);
@@ -82,11 +85,16 @@ describe("auth.service (unit)", () => {
       deleteCloudinaryImage: jest.fn(),
     }));
     jest.doMock("../../../../src/utils/mailer.util", () => ({
-      sendEmail: sendEmailMock,
+      sendEmail: jest.fn(),
     }));
     jest.doMock("../../../../src/utils/email.util", () => ({
       matchBueEmail: jest.fn(() => ["", "student", "24"]),
       isValidBueYear: jest.fn(() => true),
+    }));
+    jest.doMock("../../../../src/utils/totp", () => ({
+      generateBase32Secret: jest.fn().mockReturnValue("OTPSECRET"),
+      verifyTotpCode: jest.fn().mockReturnValue(true),
+      buildOtpAuthUrl: jest.fn().mockReturnValue("otpauth://totp/test"),
     }));
 
     const service = require("../../../../src/services/auth.service");
@@ -98,19 +106,15 @@ describe("auth.service (unit)", () => {
 
     expect(result.requiresOtp).toBe(true);
     expect(result.otpToken).toBe("otp-token");
-    expect(result.otpCode).toMatch(/^\d{6}$/);
-    expect(userDoc.save).toHaveBeenCalled();
-    expect(sendEmailMock).toHaveBeenCalledTimes(1);
-    expect(sendEmailMock).toHaveBeenCalledWith(
+    expect(jwtMock.signOtpToken).toHaveBeenCalledWith(
       expect.objectContaining({
-        to: "student240002@bue.edu.eg",
+        userId: "u2",
+        purpose: "login_otp",
       })
     );
   });
 
-  test("verifyLoginOtp issues access token when OTP code is valid", async () => {
-    const otpCode = "123456";
-    const otpHash = crypto.createHash("sha256").update(otpCode).digest("hex");
+  test("verifyLoginOtp issues access token when authenticator code is valid", async () => {
     const userDoc = {
       _id: { toString: () => "u3" },
       email: "student240003@bue.edu.eg",
@@ -118,8 +122,7 @@ describe("auth.service (unit)", () => {
       role: "user",
       status: "approved",
       otpEnabled: true,
-      otpLoginCodeHash: otpHash,
-      otpLoginCodeExpiresAt: new Date(Date.now() + 60 * 1000),
+      otpSecret: "OTPSECRET",
       save: jest.fn().mockResolvedValue(undefined),
     };
 
@@ -135,6 +138,7 @@ describe("auth.service (unit)", () => {
         purpose: "login_otp",
       }),
     };
+    const verifyTotpCodeMock = jest.fn().mockReturnValue(true);
 
     jest.doMock("../../../../src/models/user.model", () => UserMock);
     jest.doMock("bcryptjs", () => ({ compare: jest.fn(), hash: jest.fn() }));
@@ -149,17 +153,25 @@ describe("auth.service (unit)", () => {
       matchBueEmail: jest.fn(() => ["", "student", "24"]),
       isValidBueYear: jest.fn(() => true),
     }));
+    jest.doMock("../../../../src/utils/totp", () => ({
+      generateBase32Secret: jest.fn().mockReturnValue("OTPSECRET"),
+      verifyTotpCode: verifyTotpCodeMock,
+      buildOtpAuthUrl: jest.fn().mockReturnValue("otpauth://totp/test"),
+    }));
 
     const service = require("../../../../src/services/auth.service");
 
     const result = await service.verifyLoginOtp({
       otpToken: "otp-token",
-      otpCode,
+      otpCode: "123456",
     });
 
     expect(result.token).toBe("access-token");
-    expect(userDoc.otpLoginCodeHash).toBeNull();
-    expect(userDoc.otpLoginCodeExpiresAt).toBeNull();
-    expect(userDoc.save).toHaveBeenCalled();
+    expect(verifyTotpCodeMock).toHaveBeenCalledWith(
+      expect.objectContaining({
+        secret: "OTPSECRET",
+        token: "123456",
+      })
+    );
   });
 });

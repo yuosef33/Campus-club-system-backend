@@ -3,18 +3,24 @@ const { verifyAccessToken } = require("../utils/jwt");
 const { ROLES, USER_STATUS } = require("../constants/roles");
 const logger = require("../utils/logger");
 const User = require("../models/user.model");
+const crypto = require("crypto");
+
+const tokenFingerprint = (token) =>
+  crypto.createHash("sha256").update(String(token || "")).digest("hex").slice(0, 12);
 
 const authenticate = async (req, res, next) => {
   const authHeader = req.headers.authorization;
+  const bearerMatch =
+    typeof authHeader === "string" ? authHeader.match(/^Bearer\s+(.+)$/i) : null;
 
-  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+  if (!bearerMatch) {
     logger.security("Missing or malformed bearer token", {
       request: logger.getRequestMeta(req),
     });
     return next(new ApiError(401, "Unauthorized: missing bearer token."));
   }
 
-  const token = authHeader.split(" ")[1];
+  const token = String(bearerMatch[1] || "").trim();
   let tokenPayload;
 
   try {
@@ -23,6 +29,7 @@ const authenticate = async (req, res, next) => {
     logger.security("Invalid or expired bearer token", {
       request: logger.getRequestMeta(req),
       reason: error.message,
+      tokenFingerprint: tokenFingerprint(token),
     });
     return next(new ApiError(401, "Unauthorized: invalid or expired token."));
   }

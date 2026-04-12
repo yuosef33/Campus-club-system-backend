@@ -49,12 +49,8 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    otpLoginCodeHash: {
+    otpSecret: {
       type: String,
-      default: null,
-    },
-    otpLoginCodeExpiresAt: {
-      type: Date,
       default: null,
     },
     emailVerificationTokenHash: {
@@ -91,7 +87,7 @@ const userSchema = new mongoose.Schema(
 userSchema.set("toJSON", {
   transform: (_, ret) => {
     delete ret.passwordHash;
-    delete ret.otpLoginCodeHash;
+    delete ret.otpSecret;
     delete ret.emailVerificationTokenHash;
     delete ret.passwordResetTokenHash;
     return ret;

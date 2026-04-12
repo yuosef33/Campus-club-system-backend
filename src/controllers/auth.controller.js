@@ -2,6 +2,7 @@ const asyncHandler = require("../utils/asyncHandler");
 const ApiError = require("../utils/ApiError");
 const authService = require("../services/auth.service");
 const { USER_STATUS } = require("../constants/roles");
+const crypto = require("crypto");
 const {
   uploadImageBuffer,
   isCloudinaryConfigured,
@@ -32,6 +33,18 @@ const register = asyncHandler(async (req, res) => {
 const login = asyncHandler(async (req, res) => {
   const payload = await authService.login(req.body);
   const requiresOtp = Boolean(payload?.requiresOtp);
+
+  if (payload?.token && process.env.NODE_ENV !== "production") {
+    const tokenFp = crypto
+      .createHash("sha256")
+      .update(payload.token)
+      .digest("hex")
+      .slice(0, 12);
+    console.log(
+      `[auth-debug] issued-access-token fp=${tokenFp} user=${payload.user?._id || "unknown"}`
+    );
+  }
+
   res.status(200).json({
     success: true,
     message: requiresOtp ? "OTP verification required." : "Login successful.",
@@ -136,11 +149,15 @@ const updateMyPassword = asyncHandler(async (req, res) => {
 });
 
 const updateMyOtpSettings = asyncHandler(async (req, res) => {
-  const user = await authService.updateOtpSettings(req.user.userId, req.body);
+  const result = await authService.updateOtpSettings(req.user.userId, req.body);
+  const setupRequired = Boolean(result?.otpSetup?.required);
+
   res.status(200).json({
     success: true,
-    message: `OTP ${user.otpEnabled ? "enabled" : "disabled"} successfully.`,
-    data: user,
+    message: setupRequired
+      ? "Authenticator setup started. Verify a generated code to enable OTP."
+      : `OTP ${result.user.otpEnabled ? "enabled" : "disabled"} successfully.`,
+    data: result,
   });
 });
 
